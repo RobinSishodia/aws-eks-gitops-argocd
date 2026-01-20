@@ -1,0 +1,17 @@
+aws-eks-gitops-argocd/
+│
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+│
+├── k8s-manifests/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│
+├── argocd/
+│   └── application.yaml
+│
+├── screenshots/
+│
+└── README.md
