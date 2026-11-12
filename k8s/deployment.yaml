@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gitops-demo
+  template:
+    metadata:
+      labels:
+        app: gitops-demo
+    spec:
+      containers:
+        - name: gitops-demo
+          image: gitops-demo:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
