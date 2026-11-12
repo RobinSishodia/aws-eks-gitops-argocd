@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: gitops-demo
-          image: gitops-demo:v1
-          imagePullPolicy: IfNotPresent
+          image: robinsishodia/gitops-demo:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           readinessProbe:
