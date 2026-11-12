@@ -9,7 +9,7 @@ app = Flask(__name__)
 def home():
     version = os.getenv("APP_VERSION", "v1")
     return (
-        "<h1>GitOps demo</h1>"
+        "<h1>GitOps demo - built by Jenkins</h1>"
         f"<p>Version: {version}</p>"
         f"<p>Served by: {socket.gethostname()}</p>"
     )
