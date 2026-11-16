@@ -84,6 +84,14 @@ Jenkins runs as a container (`jenkins/jenkins:lts-jdk21`) with the Docker socket
 - Jenkins runs as root with the Docker socket mounted. That is fine for a local lab, not for production.
 - ArgoCD uses a self-signed certificate locally.
 
+## Automatic builds
+
+Jenkins polls GitHub about every 2 minutes (Poll SCM, `H/2 * * * *`) and starts a build when there is a new commit. The pipeline itself pushes a commit (the image tag bump), so the `Jenkinsfile` wraps its stages in a guard that skips any build whose latest commit message contains `[skip ci]`. That stops Jenkins from rebuilding its own commit in a loop.
+
+Verified end to end: pushing a one-line app change produced a build, an image push, a manifest commit and an ArgoCD rollout with no manual step.
+
+Polling was chosen over a GitHub webhook because Jenkins runs on a laptop that GitHub cannot reach. A webhook would need a public tunnel or a hosted Jenkins.
+
 ## Running it on AWS EKS (Terraform)
 
 The same GitOps flow was provisioned on AWS with Terraform, verified, and then destroyed to avoid cost.
@@ -105,4 +113,5 @@ The same GitOps flow was provisioned on AWS with Terraform, verified, and then d
 ## Roadmap
 
 - [x] Provision EKS with Terraform and run the same GitOps flow on AWS
-- [ ] GitHub webhook to trigger Jenkins on push
+- [x] Automatic builds on push (Poll SCM with a `[skip ci]` loop guard)
+- [ ] Real GitHub webhook (needs Jenkins reachable from the internet)
