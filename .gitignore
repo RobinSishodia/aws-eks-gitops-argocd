@@ -8,3 +8,4 @@ crash.log
 # AWS credentials must never be committed
 .aws/
 *.csv
+tfplan*
