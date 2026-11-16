@@ -2,7 +2,7 @@
 
 A small end-to-end GitOps pipeline: a code push is built into a Docker image by Jenkins, the new image tag is committed back to Git, and ArgoCD deploys it to Kubernetes automatically. Git is the single source of truth, and manual changes to the cluster are reverted.
 
-Currently runs on a local [kind](https://kind.sigs.k8s.io/) cluster. Moving it to AWS EKS with Terraform is planned.
+Runs on a local [kind](https://kind.sigs.k8s.io/) cluster, and has also been provisioned on AWS EKS with Terraform (see [Running it on AWS EKS](#running-it-on-aws-eks-terraform)).
 
 ## How it works
 
@@ -84,7 +84,25 @@ Jenkins runs as a container (`jenkins/jenkins:lts-jdk21`) with the Docker socket
 - Jenkins runs as root with the Docker socket mounted. That is fine for a local lab, not for production.
 - ArgoCD uses a self-signed certificate locally.
 
+## Running it on AWS EKS (Terraform)
+
+The same GitOps flow was provisioned on AWS with Terraform, verified, and then destroyed to avoid cost.
+
+- `terraform/` builds a VPC (2 AZs, public and private subnets, one NAT gateway) and an EKS cluster (Kubernetes 1.37) with a managed node group of 2 x `c7i-flex.large`, using the community `terraform-aws-modules` vpc and eks modules.
+- ArgoCD was installed on the cluster and `argocd-app.yaml` pointed it at `k8s/`. The Flask app deployed as 3 pods pulled from Docker Hub, `Synced` and `Healthy`.
+- `terraform destroy` removed all 56 resources, and the cleanup was verified with the AWS CLI.
+
+![EKS nodes, ArgoCD application and pods](docs/eks-terminal.png)
+![The app served from EKS](docs/eks-app.png)
+![ArgoCD on EKS showing Synced and Healthy](docs/eks-argocd.png)
+
+### What went wrong, and the fixes
+
+- **Free plan instance types:** the first node group failed with `InvalidParameterCombination ... not eligible for Free Tier` for `t3.medium`. I listed the allowed types with `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true` and switched to `c7i-flex.large`.
+- **Nodes never became ready:** version 21 of the EKS module does not install the core cluster add-ons by default, so the nodes had no pod networking. Declaring `vpc-cni`, `kube-proxy`, `coredns` and `eks-pod-identity-agent` in the module's `addons` fixed it.
+- **A stuck apply:** a node group that never became ready kept Terraform waiting for hours. I added a 25-minute create timeout to the node group so a stuck build fails fast.
+
 ## Roadmap
 
-- [ ] Provision EKS with Terraform and run the same GitOps flow on AWS
+- [x] Provision EKS with Terraform and run the same GitOps flow on AWS
 - [ ] GitHub webhook to trigger Jenkins on push
